@@ -9,7 +9,7 @@ market = ["us"]
 
 client_id = getenv('SPOTIPY_CLIENT_ID')
 client_secret = getenv('SPOTIPY_CLIENT_SECRET')
-
+spotify_uri = getenv('SPOTIFY_URI')
 
 def get_song_info(song_id):
     '''

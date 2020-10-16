@@ -19,7 +19,7 @@ import pickle
 from sklearn.neighbors import NearestNeighbors
 # functions for encapsulation and reabability
 from .spotify import search_artist_info, search_track_info, get_album_list, pull_features, plot_radar_one, get_song_info
-from .suggest import find_recommended_songs
+#from .suggest import find_recommended_songs
 # from .etl_postgres import create_tables
 
 

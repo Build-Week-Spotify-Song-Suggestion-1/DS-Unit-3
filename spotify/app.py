@@ -30,7 +30,7 @@ def create_app():
 
     CORS(app)
     
-    filename = 'beats/testing_model.sav'
+    filename = 'spotify/testing_model.sav'
     loaded_model = pickle.load(open(filename, 'rb'))
 
 

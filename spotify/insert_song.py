@@ -1,34 +1,31 @@
+import os
+from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import execute_values
 import pandas
 
-DB_NAME = 'yavaoafa'
-DB_USER = 'yavaoafa'
-DB_PASS = 'F-Y4Brb8xA2ZsBafGe7jYgJnlg4MIHWp'
-DB_HOST = 'salt.db.elephantsql.com'
+# Set up .env variables to connect to postgres later
 
-# Connect to ElephantSQL - hosted PostgreSQL DB
-conn = psycopg2.connect(DB_NAME=DB_NAME,
-                        DB_USER=DB_USER,
-                        DB_PASS=DB_PASS,
-                        DB_HOST=DB_HOST)
+load_dotenv()
 
-cursor = conn.cursor()
+DB_NAME = os.getenv('DB_NAME')
+DB_USER = os.getenv('DB_USER')
+DB_PASS = os.getenv('DB_PASS')
+DB_HOST = os.getenv('DB_HOST')
 
-cursor.execute("SELECT * from test_table;")
+# Instantiate spotify data
 
-results = cursor.fetchall()
-# print(results)
+CSV_FILEPATH = os.path.join(os.path.dirname(__file__), "..", "spotify", "song.csv")
 
-#### Connect to SQLite DB for Song Data ####
+connection = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+print(type(connection)) #> <class 'psycopg2.extensions.connection'>
 
-import sqlite3
-
-sl_conn = sqlite3.connect('song.sqlite3')
-sl_cursor = sl_conn.cursor()
+cursor = connection.cursor()
+print(type(cursor)) #> <class 'psycopg2.extensions.cursor'>
 
 
-query = '''
+sql = """
+DROP TABLE IF EXISTS songs;
 CREATE TABLE IF NOT EXISTS songs (
     acousticness float8,
     artists varchar,
@@ -38,34 +35,38 @@ CREATE TABLE IF NOT EXISTS songs (
     explicit float8,
     id varchar,
     instrumentalness float8,
-    key int,
+    key int4,
     liveness float8,
     loudness float8,
-    mode int,
+    mode int4,
     name varchar,
-    popularity int,
+    popularity int4,
     release_date varchar,
     speechiness float8,
     tempo float8,
     valence float8,
-    year int
+    year int4
 );
-'''
+"""
 
-cursor.execute(query)
+cursor.execute(sql)
 
-CSV_FILEPATH = "song.csv"
+# READ SONG DATA FROM THE CSV FILE
+df = pandas.read_csv(CSV_FILEPATH)
+print(df.columns.tolist())
 
-for song in songs:
-    insert_song = """
-        INSERT INTO songs
-        (acousticness, artists, danceability, duration_ms, energy,
-        explicit, id, instrumentalness, key, liveness, loudness, mode,
-        name, popularity, release_date, speechiness, tempo, valence,
-        year)
-        VALUES """ + str(song[1:]) + ";"
-    cursor.execute(songs)
+df = df.astype("object") # converts numpy dtypes to native python dtypes (avoids psycopg2.ProgrammingError: can't adapt type 'numpy.int64')
 
-cursor.execute('SELECT * from songs;')
-cursor.fetchall()
-conn.commit() # actually update the database
+# how to convert dataframe to a list of tuples?
+list_of_tuples = list(df.to_records(index=False))
+
+insertion_query = f"""INSERT INTO songs
+        (acousticness, artists, danceability, duration_ms, energy, explicit, id, instrumentalness, key, liveness, loudness, mode, name, popularity, release_date, speechiness, tempo, valence, year) VALUES %s"""
+execute_values(cursor, insertion_query, list_of_tuples) # third param: data as a list of tuples!
+
+# CLEAN UP
+
+connection.commit() # actually save the records / run the transaction to insert rows
+
+cursor.close()
+connection.close()

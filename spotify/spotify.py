@@ -76,7 +76,6 @@ def pull_features(song_id):
     returns:
         json file of song features associated with song for ML model
     '''
-    # song_id = '6llUzeoGSQ53W3ThFbReE2' # for testing
     track_features = spotify.audio_features(song_id)
     return track_features
 

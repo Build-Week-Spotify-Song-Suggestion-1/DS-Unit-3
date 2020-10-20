@@ -5,11 +5,16 @@ from dotenv import load_dotenv
 import plotly.graph_objects as go
 import plotly.express as px
 
+load_dotenv()
+
 market = ["us"]
 
 client_id = getenv('SPOTIPY_CLIENT_ID')
 client_secret = getenv('SPOTIPY_CLIENT_SECRET')
-spotify_uri = getenv('SPOTIFY_URI')
+credentials = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+token = credentials.get_access_token()
+spotify = spotipy.Spotify(auth=token)
+spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
 
 def get_song_info(song_id):
     '''

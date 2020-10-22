@@ -1,1 +1,1 @@
-web: gunicorn beats:APP -t 300
+web: gunicorn spotify:APP -t 300
